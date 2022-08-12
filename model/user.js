@@ -26,6 +26,9 @@ const userSchema = new Schema({
         required: [true, "password is required."],
         minLength: [5, "password minimum lenght should be 5"]
     },
+    token: {
+        type: String
+    },
     date: { type: Date, default: Date.now }
 });
 
