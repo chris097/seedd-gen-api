@@ -29,22 +29,42 @@ exports.registerUser = async (req, res, next) => {
 exports.loginUser = async (req, res, next) => {
     try {
         const { email, password } = req.body;
-        if(!email) return res.status(400).json({message: "email is required."})
-        if(!password) return res.status(400).json({message: "password is required."})
+        if (!email) return res.status(400).json({ message: "email is required." })
+        if (!password) return res.status(400).json({ message: "password is required." })
         const user = await User.findOne({ email: email });
         const token = jwt.sign({ _id: user._id, email }, JWT_TOKEN, { expiresIn: '1h' })
         user.token = token;
         if (user) {
             const validateUser = await bcrypt.compare(password, user.password);
             if (validateUser) {
-                return res.status(200).json({ message: "User successfully login"});
+                return res.status(200).json({ message: "User successfully login" });
             } else {
-                return res.status(400).json({ message: "password is incorrect"})
+                return res.status(400).json({ message: "password is incorrect" })
             }
         } else {
-            res.status(400).json({message: "email is incorrect."})
+            res.status(400).json({ message: "email is incorrect." })
         };
     } catch (err) {
-        res.status(500).json({message: err.message})
+        res.status(500).json({ message: err.message })
     }
-}
+};
+
+exports.resetPassword = async (req, res, next) => {
+    try {
+        const { email } = req.body;
+        const user = await User.findOne({ email: email });
+        if (!user) return res.status(400).json({ message: "No account with such email found" })
+        const token = jwt.sign({ _id: user._id, email }, JWT_TOKEN, { expiresIn: '1h' });
+        user.token = token;
+        return user.save()
+            .then(result => {
+                sendMail(email, 'Reset Password', `<p><a href="http://localhost/5400/reset/${token}">Click</a> have have been sent your mail</p>`)
+                res.status(200).json({message: "Mail sent."})
+            })
+    } catch (err) {
+        res.status(400).json({ message: err.message })
+    }
+};
+
+
+
